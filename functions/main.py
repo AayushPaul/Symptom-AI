@@ -5,6 +5,10 @@
 from firebase_functions import https_fn
 from firebase_functions.options import set_global_options
 from firebase_admin import initialize_app
+from shared.admin import db 
+
+from auth.user import on_user_create
+from api.userModeChange import set_user_role
 
 # For cost control, you can set the maximum number of containers that can be
 # running at the same time. This helps mitigate the impact of unexpected

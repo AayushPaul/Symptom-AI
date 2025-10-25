@@ -38,6 +38,7 @@
         "*.local"
       ],
       "runtime": "python313", 
+      "python": "C:\\Users\\aayus\\miniconda3\\envs\\symptom-ai\\python.exe", 
       "predeploy": [] 
     }
   ]
