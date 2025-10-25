@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper function to check if the user is a healthcare provider
+    // This reads from your Firestore 'users' collection
+    function isProvider() {
+      return get(/databases/(default)/documents/users/$(request.auth.uid)).data.userType == 'provider';
+    }
+
+    // Match the path where you store videos
+    match /videos/{userId}/{videoId} {
+
+      // CREATE (Upload)
+      // Allow if the user is logged in AND they are uploading to their own user folder
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // READ (Download)
+      // Allow if the user is a provider OR they are the patient who owns the file
+      allow read: if isProvider() || (request.auth != null && request.auth.uid == userId);
+      
+      // UPDATE, DELETE
+      // Disallow all client-side updates and deletes for security
+      allow update, delete: if false;
+    }
+  }
+}
