@@ -11,12 +11,12 @@ import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } f
 
 // Firebase configuration (replace with your actual config)
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCxHmDct_7O9d4iKrOvjC3CxB2h65beQ4k",
+  authDomain: "hack-ohio-symptom-ai.firebaseapp.com",
+  projectId: "hack-ohio-symptom-ai",
+  storageBucket: "hack-ohio-symptom-ai.firebasestorage.app",
+  messagingSenderId: "1029512619949",
+  appId: "1:1029512619949:web:bdf9d6664c7c4c7e42a324"
 };
 
 const app = initializeApp(firebaseConfig);
