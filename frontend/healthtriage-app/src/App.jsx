@@ -6,6 +6,7 @@ import {
   Volume2, Eye, Loader
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
+import './App.css';
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
