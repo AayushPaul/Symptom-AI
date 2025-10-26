@@ -1,28 +1,25 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // Helper function to check if the user is a healthcare provider
-    // This reads from your Firestore 'users' collection
-    function isProvider() {
-      return get(/databases/(default)/documents/users/$(request.auth.uid)).data.userType == 'provider';
-    }
-
-    // Match the path where you store videos
-    match /videos/{userId}/{videoId} {
-
-      // CREATE (Upload)
-      // Allow if the user is logged in AND they are uploading to their own user folder
-      allow create: if request.auth != null && request.auth.uid == userId;
-
-      // READ (Download)
-      // Allow if the user is a provider OR they are the patient who owns the file
-      allow read: if isProvider() || (request.auth != null && request.auth.uid == userId);
+    
+    // Videos can only be uploaded by authenticated users to their own folder
+    match /videos/{userId}_{timestamp}_{fileName} {
+      // Allow upload if authenticated and userId matches
+      allow write: if request.auth != null 
+                   && userId == request.auth.uid
+                   && request.resource.size < 100 * 1024 * 1024  // Max 100MB
+                   && request.resource.contentType.matches('video/.*');
       
-      // UPDATE, DELETE
-      // Disallow all client-side updates and deletes for security
-      allow update, delete: if false;
+      // Allow read by owner or healthcare providers
+      allow read: if request.auth != null 
+                  && (userId == request.auth.uid || hasRole('doctor') || hasRole('nurse'));
+    }
+    
+    // Helper function to check roles
+    function hasRole(role) {
+      return request.auth != null 
+             && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+             && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == role;
     }
   }
 }

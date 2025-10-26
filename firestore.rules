@@ -1,39 +1,38 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if the signed-in user is a healthcare provider
-    function isProvider() {
-      // Check if the user's 'userType' field is 'provider'.
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'provider';
+    
+    // Triage requests collection
+    match /triage_requests/{requestId} {
+      // Patients can create their own requests
+      allow create: if request.auth != null 
+                    && request.resource.data.patient_id == request.auth.uid;
+      
+      // Patients can read their own requests
+      allow read: if request.auth != null 
+                  && (resource.data.patient_id == request.auth.uid 
+                      || hasRole('doctor') 
+                      || hasRole('nurse'));
+      
+      // Only functions can update (for AI analysis results)
+      allow update: if false;
+      
+      // Patients can delete their own old requests
+      allow delete: if request.auth != null 
+                    && resource.data.patient_id == request.auth.uid;
     }
     
-    // === USER PROFILES ===
-    // Users can only read and update their OWN profile.
+    // User profiles collection
     match /users/{userId} {
-      allow read, update: if request.auth.uid == userId;
+      // Users can read/write their own profile
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-
-    // === TRIAGE REQUESTS ===
-    // 'triageRequests' is the collection where patients upload new videos.
-    match /triageRequests/{requestId} {
-      // A patient can CREATE a new request, but only if they set the 'patientId' to their own user ID.
-      allow create: if request.auth.uid == request.resource.data.patientId;
-      
-      // ONLY providers can VIEW (get) or LIST the queue of requests.
-      allow get, list: if isProvider();
-    }
-
-    // === TRIAGE RESULTS ===
-    // 'tSymptom-AI' is the collection where your AI function saves the analysis.
-    match /triageResults/{resultId} {
-      // A user can GET a result if they are a provider,
-      // OR if they are the patient who owns that result.
-      allow get: if isProvider() || request.auth.uid == resource.data.patientId;
-      
-      // ONLY providers can LIST all the results (for their dashboard).
-      allow list: if isProvider();
+    
+    // Helper function to check user roles
+    function hasRole(role) {
+      return request.auth != null 
+             && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+             && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
     }
   }
 }
