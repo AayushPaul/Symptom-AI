@@ -479,4 +479,544 @@ function PatientDashboard() {
       case 'mild': return 'bg-green-100 text-green-800 border-green-300';
       case 'moderate': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
       case 'severe': return 'bg-red-100 text-red-800 border-red-300';
-      default: return 
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
+
+  const getSeverityBadge = (severity) => {
+    switch(severity) {
+      case 'mild': return { text: 'Mild', icon: <CheckCircle className="w-4 h-4" /> };
+      case 'moderate': return { text: 'Moderate', icon: <Clock className="w-4 h-4" /> };
+      case 'severe': return { text: 'Severe', icon: <AlertCircle className="w-4 h-4" /> };
+      default: return { text: 'Unknown', icon: null };
+    }
+  };
+
+  const handleBookAppointment = () => {
+    setShowAppointmentModal(true);
+  };
+
+  const handleMessageDoctor = () => {
+    setShowMessageModal(true);
+  };
+
+  const handleViewRecords = () => {
+    setShowRecordsModal(true);
+  };
+
+  const findNearestER = () => {
+    // In production, this would integrate with Google Maps API
+    window.open('https://www.google.com/maps/search/emergency+room+near+me', '_blank');
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Accessibility Bar */}
+      <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Languages className="w-5 h-5 text-gray-600" />
+            <select 
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="zh">中文</option>
+              <option value="ar">العربية</option>
+              <option value="hi">हिन्दी</option>
+            </select>
+          </div>
+          <button className="flex items-center space-x-2 px-3 py-1 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition text-sm">
+            <Eye className="w-4 h-4" />
+            <span>ASL Support</span>
+          </button>
+          <button className="flex items-center space-x-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition text-sm">
+            <Volume2 className="w-4 h-4" />
+            <span>Audio Description</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Left Column - Video Upload */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Upload Symptom Video</h2>
+            
+            {/* Video Upload Area */}
+            <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video mb-6">
+              {!uploadedFile && !isTranscribing && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-400 mb-2">No video uploaded</p>
+                    <p className="text-gray-500 text-sm">Upload an MP4 video to get started</p>
+                  </div>
+                </div>
+              )}
+              
+              {isTranscribing && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                  <div className="text-center">
+                    <Loader className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
+                    <p className="text-white text-lg font-medium">Transcribing audio...</p>
+                    <p className="text-gray-300 mt-2">Extracting speech from video</p>
+                  </div>
+                </div>
+              )}
+              
+              {isAnalyzing && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                  <div className="text-center">
+                    <Loader className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
+                    <p className="text-white text-lg font-medium">Analyzing symptoms...</p>
+                    <p className="text-gray-300 mt-2">Processing transcription and detecting symptoms</p>
+                  </div>
+                </div>
+              )}
+              
+              {uploadedFile && !isTranscribing && !isAnalyzing && videoUrl && (
+                <video 
+                  src={videoUrl} 
+                  controls 
+                  className="w-full h-full object-contain"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              )}
+              
+              {uploadedFile && !isTranscribing && !isAnalyzing && (
+                <div className="absolute top-4 right-4">
+                  <button
+                    onClick={removeFile}
+                    className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full transition"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Upload Controls */}
+            <div className="flex items-center justify-center space-x-4 mb-6">
+              {!uploadedFile && !isTranscribing && (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition"
+                  >
+                    <Upload className="w-5 h-5" />
+                    <span>Upload Video (MP4)</span>
+                  </button>
+                </>
+              )}
+              
+              {uploadedFile && !isTranscribing && !isAnalyzing && !analysisComplete && (
+                <button
+                  onClick={removeFile}
+                  className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                  <span>Upload Different Video</span>
+                </button>
+              )}
+            </div>
+
+            {/* File info */}
+            {uploadedFile && !analysisComplete && (
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{uploadedFile.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <Video className="w-5 h-5 text-blue-600" />
+                </div>
+              </div>
+            )}
+
+            {/* Instructions */}
+            {!analysisComplete && (
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h4 className="font-semibold text-blue-900 mb-2">Video Guidelines:</h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Upload a clear video describing your symptoms</li>
+                  <li>• Speak clearly about when symptoms started</li>
+                  <li>• Mention any relevant medical history</li>
+                  <li>• Supported formats: MP4, MOV, AVI, WebM</li>
+                  <li>• Maximum file size: 100 MB</li>
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* AI Analysis Results */}
+          {analysisComplete && (
+            <div className="bg-white rounded-lg shadow-lg p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-bold text-gray-900">AI Analysis Results</h3>
+                <div className={`flex items-center space-x-2 px-4 py-2 rounded-full border-2 ${getSeverityColor(analysis.severity)}`}>
+                  {getSeverityBadge(analysis.severity).icon}
+                  <span className="font-semibold">{getSeverityBadge(analysis.severity).text} Severity</span>
+                </div>
+              </div>
+
+              {/* Confidence Score */}
+              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-gray-700">Confidence Level</span>
+                    <span className="text-sm font-bold text-gray-900">{analysis.confidence}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all"
+                      style={{ width: `${analysis.confidence}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transcription */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2 flex items-center space-x-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  <span>Transcription</span>
+                </h4>
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-gray-700 italic">"{analysis.transcription}"</p>
+                </div>
+              </div>
+
+              {/* Keywords */}
+              {analysis.keywords.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Detected Keywords</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {analysis.keywords.map((keyword, index) => (
+                      <span key={index} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Detected Symptoms */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3">Detected Symptoms</h4>
+                <div className="flex flex-wrap gap-2">
+                  {analysis.symptoms.map((symptom, index) => (
+                    <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                      {symptom}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preliminary Assessment */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Preliminary Assessment</h4>
+                <p className="text-gray-700 bg-purple-50 border border-purple-200 rounded-lg p-3">
+                  {analysis.diagnosis}
+                </p>
+              </div>
+
+              {/* Recommendations */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3 text-lg">Recommended Next Steps</h4>
+                <div className="space-y-2">
+                  {analysis.recommendations.map((rec, index) => (
+                    <div key={index} className={`flex items-start space-x-3 p-3 rounded-lg ${
+                      analysis.severity === 'severe' ? 'bg-red-50 border border-red-200' : 'bg-gray-50'
+                    }`}>
+                      <CheckCircle className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
+                        analysis.severity === 'severe' ? 'text-red-600' : 'text-green-600'
+                      }`} />
+                      <p className={`text-sm ${
+                        analysis.severity === 'severe' ? 'text-red-900 font-medium' : 'text-gray-700'
+                      }`}>{rec}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Emergency Map (for severe cases) */}
+              {analysis.severity === 'severe' && (
+                <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4">
+                  <div className="flex items-start space-x-3 mb-3">
+                    <MapPin className="w-6 h-6 text-red-600 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-bold text-red-900 mb-1">Nearest Emergency Facilities</h4>
+                      <p className="text-sm text-red-800">Click to view directions to nearby hospitals and emergency rooms</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={findNearestER}
+                    className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition w-full justify-center"
+                  >
+                    <Navigation className="w-4 h-4" />
+                    <span>Find Nearest ER</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Citations */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3 flex items-center space-x-2">
+                  <FileText className="w-5 h-5 text-green-600" />
+                  <span>Evidence-Based Sources</span>
+                </h4>
+                <div className="space-y-2">
+                  {analysis.citations.map((citation, index) => (
+                    <a
+                      key={index}
+                      href={citation.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start space-x-3 p-3 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition group"
+                    >
+                      <ExternalLink className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-green-900 group-hover:underline">
+                          {citation.title}
+                        </p>
+                        <p className="text-xs text-green-700">{citation.source}</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-3 italic">
+                  * This AI assessment is for informational purposes only and does not replace professional medical advice.
+                </p>
+              </div>
+
+              <button
+                onClick={removeFile}
+                className="w-full flex items-center justify-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition"
+              >
+                <RotateCcw className="w-5 h-5" />
+                <span>New Assessment</span>
+              </button>
+            </div>
+          )}
+
+          {/* Previous Assessments */}
+          {!analysisComplete && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Recent Assessments</h3>
+              <div className="space-y-3">
+                <AssessmentCard
+                  date="Oct 20, 2025"
+                  symptoms="Headache, Fever"
+                  recommendation="Schedule doctor visit"
+                  severity="moderate"
+                />
+                <AssessmentCard
+                  date="Oct 15, 2025"
+                  symptoms="Cough, Sore throat"
+                  recommendation="Home care recommended"
+                  severity="mild"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column - Quick Info */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+            <div className="space-y-3">
+              <button
+                onClick={handleBookAppointment}
+                className="w-full flex items-center space-x-3 p-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition"
+              >
+                <Calendar className="w-5 h-5" />
+                <span className="font-medium">Book Appointment</span>
+              </button>
+              <button
+                onClick={handleMessageDoctor}
+                className="w-full flex items-center space-x-3 p-3 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg transition"
+              >
+                <MessageSquare className="w-5 h-5" />
+                <span className="font-medium">Message Doctor</span>
+              </button>
+              <button
+                onClick={handleViewRecords}
+                className="w-full flex items-center space-x-3 p-3 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg transition"
+              >
+                <FileText className="w-5 h-5" />
+                <span className="font-medium">View Records</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Upcoming Appointments */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Upcoming</h3>
+            <div className="space-y-4">
+              <AppointmentCard
+                doctor="Dr. Sarah Johnson"
+                specialty="General Physician"
+                date="Oct 28, 2025"
+                time="2:00 PM"
+              />
+            </div>
+          </div>
+
+          {/* Emergency Notice */}
+          <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-red-900 mb-1">Emergency?</h4>
+                <p className="text-sm text-red-800 mb-2">
+                  If you're experiencing a medical emergency, call 911 immediately.
+                </p>
+                <button className="text-sm font-medium text-red-600 hover:text-red-700">
+                  Emergency Contacts →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Disclaimer */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-semibold text-blue-900 mb-2 text-sm">Important Notice</h4>
+            <p className="text-xs text-blue-800">
+              This AI-powered tool provides preliminary assessments only. Always consult with a healthcare professional for proper diagnosis and treatment.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Modals */}
+      {showAppointmentModal && (
+        <Modal title="Book Appointment" onClose={() => setShowAppointmentModal(false)}>
+          <div className="space-y-4">
+            <p className="text-gray-600">Select a date and time for your appointment:</p>
+            <input type="date" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            <input type="time" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition">
+              Confirm Appointment
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {showMessageModal && (
+        <Modal title="Message Doctor" onClose={() => setShowMessageModal(false)}>
+          <div className="space-y-4">
+            <textarea 
+              placeholder="Type your message here..."
+              rows="4"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+            ></textarea>
+            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition">
+              Send Message
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {showRecordsModal && (
+        <Modal title="Medical Records" onClose={() => setShowRecordsModal(false)}>
+          <div className="space-y-3">
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <p className="font-medium text-gray-900">Annual Checkup Report</p>
+              <p className="text-sm text-gray-500">Jan 15, 2025</p>
+            </div>
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <p className="font-medium text-gray-900">Blood Test Results</p>
+              <p className="text-sm text-gray-500">Dec 10, 2024</p>
+            </div>
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <p className="font-medium text-gray-900">X-Ray Results</p>
+              <p className="text-sm text-gray-500">Nov 5, 2024</p>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function Modal({ title, children, onClose }) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function DoctorDashboard() {
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Healthcare Provider Dashboard</h2>
+      <div className="bg-white rounded-lg shadow p-6">
+        <p className="text-gray-600">Provider dashboard features coming soon...</p>
+      </div>
+    </div>
+  );
+}
+
+function AssessmentCard({ date, symptoms, recommendation, severity }) {
+  const severityColors = {
+    mild: 'bg-green-100 text-green-800',
+    moderate: 'bg-yellow-100 text-yellow-800',
+    severe: 'bg-red-100 text-red-800'
+  };
+
+  return (
+    <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer">
+      <div className="flex-1">
+        <div className="flex items-center space-x-2 mb-1">
+          <p className="font-medium text-gray-900">{symptoms}</p>
+          <span className={`text-xs px-2 py-1 rounded-full ${severityColors[severity]}`}>
+            {severity}
+          </span>
+        </div>
+        <p className="text-sm text-gray-600">{recommendation}</p>
+        <p className="text-xs text-gray-500 mt-1">{date}</p>
+      </div>
+      <FileText className="w-5 h-5 text-gray-400" />
+    </div>
+  );
+}
+
+function AppointmentCard({ doctor, specialty, date, time }) {
+  return (
+    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <div className="flex items-start space-x-3">
+        <Calendar className="w-5 h-5 text-blue-600 mt-0.5" />
+        <div className="flex-1">
+          <p className="font-medium text-gray-900">{doctor}</p>
+          <p className="text-sm text-gray-600">{specialty}</p>
+          <p className="text-sm text-gray-500 mt-1">{date} at {time}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
