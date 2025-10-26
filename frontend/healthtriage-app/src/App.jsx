@@ -24,7 +24,8 @@ const auth = getAuth(app);
 const storage = getStorage(app);
 
 // API Base URL - change for production
-const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:5001/your-project-id/us-central1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/your-project-id/us-central1';
+
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
