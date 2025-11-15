@@ -10,9 +10,9 @@ import './App.css';
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
-// Firebase configuration (replace with your actual config)
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCxHmDct_7O9d4iKrOvjC3CxB2h65beQ4k",
+  apiKey: "",
   authDomain: "hack-ohio-symptom-ai.firebaseapp.com",
   projectId: "hack-ohio-symptom-ai",
   storageBucket: "hack-ohio-symptom-ai.firebasestorage.app",
